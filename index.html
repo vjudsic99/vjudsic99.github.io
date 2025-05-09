@@ -1,10 +1,106 @@
-<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dobrodošao</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promet građevinskog materijala 2025</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Zdravo! Ovo je moj GitHub sajt</h1>
+    <div class="container">
+        <header>
+            <h1>Promet građevinskog materijala u eurima za 2025 godinu</h1>
+            <div class="subtitle">2025 Made by Vedad</div>
+        </header>
+
+        <section class="euro-calculator">
+            <h2>Kalkulator valute</h2>
+            <div class="input-group">
+                <label for="euroRate">Tečaj eura (1 EUR = x BAM):</label>
+                <input type="number" id="euroRate" value="1.95583" step="0.0001" min="0.1">
+                <button id="calculateBtn">Izračunaj</button>
+            </div>
+        </section>
+
+        <section class="material-form">
+            <h2>Unos materijala</h2>
+            <div class="input-group">
+                <label for="materialType">Vrsta materijala:</label>
+                <select id="materialType">
+                    <option value="cement">Cement</option>
+                    <option value="cigla">Cigla</option>
+                    <option value="stiropor">Stiropor</option>
+                    <option value="pijesak">Pijesak</option>
+                    <option value="sljunak">Šljunak</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="quantity">Količina:</label>
+                <input type="number" id="quantity" min="1" value="1">
+            </div>
+            <div class="input-group">
+                <label for="price">Cijena (EUR):</label>
+                <input type="number" id="price" min="0.01" step="0.01" value="10">
+            </div>
+            <div class="input-group">
+                <label for="date">Datum:</label>
+                <input type="date" id="date" value="2025-01-01">
+            </div>
+            <button id="addMaterialBtn">Dodaj materijal</button>
+        </section>
+
+        <section class="material-table">
+            <h2>Promet građevinskog materijala</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Materijal</th>
+                        <th>Količina</th>
+                        <th>Cijena (EUR)</th>
+                        <th>Ukupno (EUR)</th>
+                        <th>Ukupno (BAM)</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody id="materialTableBody">
+                    <!-- Ovdje će se dinamički dodavati redovi -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="summary">
+            <h2>Ukupni promet</h2>
+            <div class="summary-data">
+                <div class="summary-item">
+                    <div class="summary-label">Ukupno EUR:</div>
+                    <div id="totalEUR" class="summary-value">0.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Ukupno BAM:</div>
+                    <div id="totalBAM" class="summary-value">0.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Prosječna zarada EUR:</div>
+                    <div id="averageEUR" class="summary-value">0.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Najveća zarada EUR:</div>
+                    <div id="maxEUR" class="summary-value">0.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Najmanja zarada EUR:</div>
+                    <div id="minEUR" class="summary-value">0.00</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-container">
+            <h2>Grafički prikaz</h2>
+            <canvas id="materialChart"></canvas>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
