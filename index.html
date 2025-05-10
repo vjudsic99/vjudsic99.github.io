@@ -3,63 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe</title>
+    <title>PhysicsSolver AI</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <div class="watermark">Made by Vedad</div>
+    <div class="app-container">
+        <header>
+            <h1>PhysicsSolver AI</h1>
+            <div class="language-selector">
+                <button id="englishBtn" class="language-btn active">English</button>
+                <button id="bosnianBtn" class="language-btn">Bosanski</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="camera-button" id="cameraButton">
+                    <img src="camera_icon.png" alt="Camera">
+                    <span>Take Photo</span>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" capture="environment" hidden>
+                <div class="or-divider">or</div>
+                <div class="upload-button" id="uploadButton">
+                    <img src="upload_icon.png" alt="Upload">
+                    <span>Upload Image</span>
+                </div>
+                <input type="file" id="uploadInput" accept="image/*" hidden>
+            </div>
+
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <h2>Your Physics Problem</h2>
+                <div class="image-preview-container">
+                    <img id="previewImage" src="#" alt="Preview">
+                </div>
+                <div class="button-row">
+                    <button id="cancelButton" class="secondary-button">Cancel</button>
+                    <button id="solveButton" class="primary-button">Solve Problem</button>
+                </div>
+            </div>
+
+            <div class="loading-section" id="loadingSection" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing physics problem...</p>
+            </div>
+
+            <div class="solution-section" id="solutionSection" style="display: none;">
+                <h2>Solution</h2>
+                <div class="solution-container" id="solutionContainer">
+                    <!-- Solution content will be displayed here -->
+                </div>
+                <div class="solution-actions">
+                    <button id="newProblemButton" class="primary-button">Solve Another Problem</button>
+                </div>
+            </div>
+
+            <div class="error-section" id="errorSection" style="display: none;">
+                <img src="error_icon.png" alt="Error">
+                <p id="errorMessage">Sorry, I couldn't analyze this image. Please try a clearer image or a different physics problem.</p>
+                <button id="tryAgainButton" class="primary-button">Try Again</button>
+            </div>
+        </main>
+
+        <div class="recent-problems" id="recentProblems">
+            <h2>Recent Problems</h2>
+            <div class="problems-list" id="problemsList">
+                <!-- Recent problems will appear here -->
+                <p class="empty-state">Your recent problems will appear here</p>
+            </div>
+        </div>
+
+        <footer>
+            <p><span id="footerText">PhysicsSolver AI - Solving physics problems with AI</span> | Made by Vedad</p>
+        </footer>
     </div>
 
-    <div id="game-container" class="hidden">
-        <h1>Tic Tac Toe</h1>
-        
-        <div id="menu" class="active">
-            <button id="play-bot">Play Against Bot</button>
-            <button id="play-friend">Play With Friend</button>
-        </div>
-
-        <div id="bot-difficulty" class="hidden">
-            <h2>Select Bot Difficulty</h2>
-            <div class="difficulty-buttons">
-                <button data-difficulty="easy">Easy</button>
-                <button data-difficulty="medium">Medium</button>
-                <button data-difficulty="hard">Hard</button>
-                <button data-difficulty="impossible">Impossible</button>
-            </div>
-            <button id="back-to-menu" class="back-button">Back</button>
-        </div>
-
-        <div id="game-board" class="hidden">
-            <div class="status" id="status">X's turn</div>
-            <div class="board">
-                <div class="cell" data-cell-index="0"></div>
-                <div class="cell" data-cell-index="1"></div>
-                <div class="cell" data-cell-index="2"></div>
-                <div class="cell" data-cell-index="3"></div>
-                <div class="cell" data-cell-index="4"></div>
-                <div class="cell" data-cell-index="5"></div>
-                <div class="cell" data-cell-index="6"></div>
-                <div class="cell" data-cell-index="7"></div>
-                <div class="cell" data-cell-index="8"></div>
-            </div>
-            <button id="restart">Restart Game</button>
-            <button id="back-to-menu-from-game" class="back-button">Back to Menu</button>
-        </div>
-
-        <div id="waiting-room" class="hidden">
-            <h2>Waiting for a Friend</h2>
-            <p>Share this code with your friend:</p>
-            <div id="room-code" class="room-code"></div>
-            <p>Or join with a code:</p>
-            <input type="text" id="join-code" placeholder="Enter room code">
-            <button id="join-game">Join Game</button>
-            <button id="back-from-waiting" class="back-button">Back to Menu</button>
-        </div>
-    </div>
-
-    <script src="scripts.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
-
