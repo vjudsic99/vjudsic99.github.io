@@ -1,66 +1,65 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Grading App</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="appContainer" class="container">
-    <div class="school-info">
-      <h2>Osnovna škola Pazar</h2>
-      <p>Tuzla, Bosna i Hercegovina</p>
-      <p>Školska godina 2024/2025</p>
-    </div>
-    <h1>E-Dnevnik</h1>
-    
-    <div class="classes-list">
-      <h2>Predmeti</h2>
-      <div class="flying-table-container">
-        <table id="classesTable" class="flying-table">
-          <thead>
-            <tr>
-              <th>Naziv predmeta</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-      </div>
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <div class="watermark">Made by Vedad</div>
     </div>
 
-    <form id="gradeForm">
-      <div class="input-group">
-        <label for="studentName">Ime učenika:</label>
-        <input type="text" id="studentName" required>
-      </div>
+    <div id="game-container" class="hidden">
+        <h1>Tic Tac Toe</h1>
+        
+        <div id="menu" class="active">
+            <button id="play-bot">Play Against Bot</button>
+            <button id="play-friend">Play With Friend</button>
+        </div>
 
-      <div class="input-group">
-        <label for="className">Predmet:</label>
-        <input type="text" id="className" required list="classList">
-        <datalist id="classList"></datalist>
-      </div>
+        <div id="bot-difficulty" class="hidden">
+            <h2>Select Bot Difficulty</h2>
+            <div class="difficulty-buttons">
+                <button data-difficulty="easy">Easy</button>
+                <button data-difficulty="medium">Medium</button>
+                <button data-difficulty="hard">Hard</button>
+                <button data-difficulty="impossible">Impossible</button>
+            </div>
+            <button id="back-to-menu" class="back-button">Back</button>
+        </div>
 
-      <div class="input-group">
-        <label for="grade">Ocjena (1-5):</label>
-        <input type="number" id="grade" min="1" max="5" required>
-        <small>5=Odličan, 4=Vrlo dobar, 3=Dobar, 2=Dovoljan, 1=Nedovoljan</small>
-      </div>
+        <div id="game-board" class="hidden">
+            <div class="status" id="status">X's turn</div>
+            <div class="board">
+                <div class="cell" data-cell-index="0"></div>
+                <div class="cell" data-cell-index="1"></div>
+                <div class="cell" data-cell-index="2"></div>
+                <div class="cell" data-cell-index="3"></div>
+                <div class="cell" data-cell-index="4"></div>
+                <div class="cell" data-cell-index="5"></div>
+                <div class="cell" data-cell-index="6"></div>
+                <div class="cell" data-cell-index="7"></div>
+                <div class="cell" data-cell-index="8"></div>
+            </div>
+            <button id="restart">Restart Game</button>
+            <button id="back-to-menu-from-game" class="back-button">Back to Menu</button>
+        </div>
 
-      <button type="submit">Dodaj ocjenu</button>
-    </form>
-
-    <div class="grades-container">
-      <h2>Ocjene učenika</h2>
-      <div id="gradesList"></div>
+        <div id="waiting-room" class="hidden">
+            <h2>Waiting for a Friend</h2>
+            <p>Share this code with your friend:</p>
+            <div id="room-code" class="room-code"></div>
+            <p>Or join with a code:</p>
+            <input type="text" id="join-code" placeholder="Enter room code">
+            <button id="join-game">Join Game</button>
+            <button id="back-from-waiting" class="back-button">Back to Menu</button>
+        </div>
     </div>
 
-    <footer>
-      <p>Made by Vedad</p>
-    </footer>
-  </div>
-  
-  <script src="script.js"></script>
+    <script src="scripts.js"></script>
 </body>
 </html>
 
