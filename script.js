@@ -1,477 +1,393 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize WebsimSocket for multiplayer
-    const room = new WebsimSocket();
+    // DOM elements
+    const cameraButton = document.getElementById('cameraButton');
+    const imageInput = document.getElementById('imageInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const uploadInput = document.getElementById('uploadInput');
+    const previewSection = document.getElementById('previewSection');
+    const loadingSection = document.getElementById('loadingSection');
+    const solutionSection = document.getElementById('solutionSection');
+    const errorSection = document.getElementById('errorSection');
+    const previewImage = document.getElementById('previewImage');
+    const cancelButton = document.getElementById('cancelButton');
+    const solveButton = document.getElementById('solveButton');
+    const newProblemButton = document.getElementById('newProblemButton');
+    const tryAgainButton = document.getElementById('tryAgainButton');
+    const solutionContainer = document.getElementById('solutionContainer');
+    const errorMessage = document.getElementById('errorMessage');
+    const problemsList = document.getElementById('problemsList');
+    const englishBtn = document.getElementById('englishBtn');
+    const bosnianBtn = document.getElementById('bosnianBtn');
 
-    /* @tweakable loading screen duration in milliseconds */
-    const loadingScreenDuration = 5000;
-
-    /* @tweakable bot move delay in milliseconds */
-    const botMoveDelay = 500;
-
-    /* @tweakable minimax AI difficulty weights */
-    const difficultyWeights = {
-        medium: 0.6, // chance to make an optimal move
-        hard: 0.8    // chance to make an optimal move
+    // Language translations
+    const translations = {
+        english: {
+            title: "PhysicsSolver AI",
+            takePhoto: "Take Photo",
+            or: "or",
+            uploadImage: "Upload Image",
+            yourProblem: "Your Physics Problem",
+            cancel: "Cancel",
+            solveProblem: "Solve Problem",
+            analyzing: "Analyzing physics problem...",
+            solution: "Solution",
+            solveAnother: "Solve Another Problem",
+            errorMessage: "Sorry, I couldn't analyze this image. Please try a clearer image or a different physics problem.",
+            tryAgain: "Try Again",
+            recentProblems: "Recent Problems",
+            emptyState: "Your recent problems will appear here",
+            footerText: "PhysicsSolver AI - Solving physics problems with AI"
+        },
+        bosnian: {
+            title: "Fizika Rješavač AI",
+            takePhoto: "Uslikaj",
+            or: "ili",
+            uploadImage: "Učitaj sliku",
+            yourProblem: "Vaš zadatak iz fizike",
+            cancel: "Otkaži",
+            solveProblem: "Riješi zadatak",
+            analyzing: "Analiziram zadatak iz fizike...",
+            solution: "Rješenje",
+            solveAnother: "Riješi drugi zadatak",
+            errorMessage: "Žao mi je, ne mogu analizirati ovu sliku. Molimo pokušajte s jasnijom slikom ili drugim zadatkom iz fizike.",
+            tryAgain: "Pokušaj ponovo",
+            recentProblems: "Nedavni zadaci",
+            emptyState: "Vaši nedavni zadaci će se pojaviti ovdje",
+            footerText: "Fizika Rješavač AI - Rješavanje zadataka iz fizike pomoću AI"
+        }
     };
 
-    // Game state
-    let gameBoard = ['', '', '', '', '', '', '', '', ''];
-    let currentPlayer = 'X';
-    let isGameActive = true;
-    let gameMode = null; // 'bot' or 'friend'
-    let botDifficulty = null;
-    let isPlayerTurn = true;
+    // Current language
+    let currentLanguage = 'english';
 
-    // DOM elements
-    const loadingScreen = document.getElementById('loading-screen');
-    const gameContainer = document.getElementById('game-container');
-    const menuSection = document.getElementById('menu');
-    const botDifficultySection = document.getElementById('bot-difficulty');
-    const gameBoardSection = document.getElementById('game-board');
-    const waitingRoomSection = document.getElementById('waiting-room');
-    const cells = document.querySelectorAll('.cell');
-    const statusDisplay = document.getElementById('status');
-    const roomCodeDisplay = document.getElementById('room-code');
-    
-    // Buttons
-    const playBotButton = document.getElementById('play-bot');
-    const playFriendButton = document.getElementById('play-friend');
-    const backToMenuButton = document.getElementById('back-to-menu');
-    const backToMenuFromGameButton = document.getElementById('back-to-menu-from-game');
-    const backFromWaitingButton = document.getElementById('back-from-waiting');
-    const restartButton = document.getElementById('restart');
-    const joinGameButton = document.getElementById('join-game');
-    const difficultyButtons = document.querySelectorAll('[data-difficulty]');
-    
-    // Initialize websocket connection
-    async function initializeMultiplayer() {
-        await room.initialize();
-        
-        // Generate random room code
-        if (!room.roomState.roomCode) {
-            const randomCode = Math.floor(10000 + Math.random() * 90000).toString();
-            room.updateRoomState({
-                roomCode: randomCode,
-                gameBoard: ['', '', '', '', '', '', '', '', ''],
-                currentPlayer: 'X',
-                isGameActive: true
-            });
-        }
-        
-        // Subscribe to room state changes
-        room.subscribeRoomState((state) => {
-            if (state.gameBoard) {
-                gameBoard = state.gameBoard;
-                currentPlayer = state.currentPlayer;
-                isGameActive = state.isGameActive;
-                updateGameBoard();
-                updateStatus();
-            }
-        });
-        
-        // Subscribe to presence updates for multiplayer functionality
-        room.subscribePresence((presence) => {
-            const players = Object.keys(presence).filter(key => presence[key].isPlayer);
-            
-            // If we have two players, start the game
-            if (players.length === 2 && gameMode === 'friend') {
-                showSection(gameBoardSection);
-                resetGame();
-            }
-        });
-    }
+    // Initialize WebsimSocket for persistent storage
+    const room = new WebsimSocket();
 
-    // Initialize the app
-    function init() {
-        // Show loading screen for tweakable duration
-        setTimeout(() => {
-            loadingScreen.classList.add('fade-out');
-            gameContainer.classList.remove('hidden');
-            
-            // Remove loading screen after fade out animation
-            setTimeout(() => {
-                loadingScreen.classList.add('hidden');
-            }, 1000);
-        }, loadingScreenDuration);
-        
-        // Initialize multiplayer
-        initializeMultiplayer();
-        
-        // Setup event listeners
-        setupEventListeners();
-    }
+    // Initialize language
+    applyLanguage();
 
-    // Setup event listeners
-    function setupEventListeners() {
-        // Menu buttons
-        playBotButton.addEventListener('click', () => {
-            gameMode = 'bot';
-            showSection(botDifficultySection);
-        });
-        
-        playFriendButton.addEventListener('click', () => {
-            gameMode = 'friend';
-            showSection(waitingRoomSection);
-            setupMultiplayerRoom();
-        });
-        
-        // Difficulty buttons
-        difficultyButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                botDifficulty = button.getAttribute('data-difficulty');
-                showSection(gameBoardSection);
-                resetGame();
-            });
-        });
-        
-        // Back buttons
-        backToMenuButton.addEventListener('click', () => showSection(menuSection));
-        backToMenuFromGameButton.addEventListener('click', () => showSection(menuSection));
-        backFromWaitingButton.addEventListener('click', () => showSection(menuSection));
-        
-        // Game cells
-        cells.forEach(cell => {
-            cell.addEventListener('click', () => {
-                const cellIndex = parseInt(cell.getAttribute('data-cell-index'));
-                if (gameBoard[cellIndex] !== '' || !isGameActive || !isPlayerTurn) return;
-                
-                handleCellClick(cellIndex);
-            });
-        });
-        
-        // Restart button
-        restartButton.addEventListener('click', resetGame);
-        
-        // Join game button
-        joinGameButton.addEventListener('click', () => {
-            const joinCode = document.getElementById('join-code').value;
-            if (joinCode) {
-                joinMultiplayerGame(joinCode);
-            }
-        });
-    }
+    // Event listeners
+    cameraButton.addEventListener('click', () => {
+        imageInput.click();
+    });
 
-    // Setup multiplayer room
-    function setupMultiplayerRoom() {
-        // Update presence to indicate we're a player
-        room.updatePresence({ isPlayer: true, symbol: 'X' });
-        
-        // Display room code
-        roomCodeDisplay.textContent = room.roomState.roomCode;
-    }
+    uploadButton.addEventListener('click', () => {
+        uploadInput.click();
+    });
 
-    // Join multiplayer game with code
-    async function joinMultiplayerGame(code) {
-        // Check if the room code exists (simplified - in real app would check server)
-        if (code === room.roomState.roomCode) {
-            // Mark as second player
-            room.updatePresence({ isPlayer: true, symbol: 'O' });
-            showSection(gameBoardSection);
-            resetGame();
-        } else {
-            alert('Invalid room code. Please try again.');
-        }
-    }
+    imageInput.addEventListener('change', handleImageSelection);
+    uploadInput.addEventListener('change', handleImageSelection);
 
-    // Show a specific section and hide others
-    function showSection(sectionToShow) {
-        menuSection.classList.remove('active');
-        menuSection.classList.add('hidden');
-        botDifficultySection.classList.add('hidden');
-        gameBoardSection.classList.add('hidden');
-        waitingRoomSection.classList.add('hidden');
-        
-        sectionToShow.classList.remove('hidden');
-        if (sectionToShow === menuSection) {
-            menuSection.classList.add('active');
-        }
-    }
+    cancelButton.addEventListener('click', resetUI);
 
-    // Handle cell click
-    function handleCellClick(cellIndex) {
-        if (gameMode === 'friend') {
-            // In multiplayer, update the shared game state
-            const updatedBoard = [...gameBoard];
-            updatedBoard[cellIndex] = currentPlayer;
-            
-            room.updateRoomState({
-                gameBoard: updatedBoard,
-                currentPlayer: currentPlayer === 'X' ? 'O' : 'X',
-                isGameActive: isGameActive
-            });
-        } else {
-            // In single player, update local state
-            gameBoard[cellIndex] = currentPlayer;
-            cells[cellIndex].textContent = currentPlayer;
-            cells[cellIndex].classList.add(currentPlayer.toLowerCase());
-            
-            // Check for win or draw
-            if (checkWin()) {
-                statusDisplay.textContent = `Player ${currentPlayer} has won!`;
-                isGameActive = false;
-                return;
-            }
-            
-            if (checkDraw()) {
-                statusDisplay.textContent = `Game ended in a draw!`;
-                isGameActive = false;
-                return;
-            }
-            
-            // Switch player
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-            updateStatus();
-            
-            // If playing against bot and it's bot's turn
-            if (gameMode === 'bot' && currentPlayer === 'O') {
-                isPlayerTurn = false;
-                setTimeout(() => {
-                    makeBotMove();
-                    isPlayerTurn = true;
-                }, botMoveDelay); 
-            }
-        }
-    }
+    solveButton.addEventListener('click', () => {
+        analyzePhysicsProblem();
+    });
 
-    // Make a bot move based on difficulty
-    function makeBotMove() {
-        let cellIndex;
-        
-        switch (botDifficulty) {
-            case 'easy':
-                cellIndex = makeEasyBotMove();
-                break;
-            case 'medium':
-                cellIndex = Math.random() < difficultyWeights.medium ? makeHardBotMove() : makeEasyBotMove();
-                break;
-            case 'hard':
-                cellIndex = Math.random() < difficultyWeights.hard ? makeHardBotMove() : makeEasyBotMove();
-                break;
-            case 'impossible':
-                cellIndex = makeImpossibleBotMove();
-                break;
-            default:
-                cellIndex = makeEasyBotMove();
-        }
-        
-        gameBoard[cellIndex] = currentPlayer;
-        cells[cellIndex].textContent = currentPlayer;
-        cells[cellIndex].classList.add(currentPlayer.toLowerCase());
-        
-        // Check for win or draw
-        if (checkWin()) {
-            statusDisplay.textContent = `Player ${currentPlayer} has won!`;
-            isGameActive = false;
+    newProblemButton.addEventListener('click', resetUI);
+
+    tryAgainButton.addEventListener('click', resetUI);
+
+    // Language selection
+    englishBtn.addEventListener('click', () => {
+        currentLanguage = 'english';
+        englishBtn.classList.add('active');
+        bosnianBtn.classList.remove('active');
+        applyLanguage();
+    });
+
+    bosnianBtn.addEventListener('click', () => {
+        currentLanguage = 'bosnian';
+        bosnianBtn.classList.add('active');
+        englishBtn.classList.remove('active');
+        applyLanguage();
+    });
+
+    // Load recent problems on page load
+    loadRecentProblems();
+
+    // Functions
+    function handleImageSelection(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.match('image.*')) {
+            showError('Please select an image file.');
             return;
         }
-        
-        if (checkDraw()) {
-            statusDisplay.textContent = `Game ended in a draw!`;
-            isGameActive = false;
-            return;
-        }
-        
-        // Switch back to player
-        currentPlayer = 'X';
-        updateStatus();
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImage.src = e.target.result;
+            showSection(previewSection);
+        };
+        reader.readAsDataURL(file);
     }
 
-    // Easy bot: random move
-    function makeEasyBotMove() {
-        const availableCells = gameBoard.map((cell, index) => 
-            cell === '' ? index : null).filter(index => index !== null);
-        
-        return availableCells[Math.floor(Math.random() * availableCells.length)];
+    async function analyzePhysicsProblem() {
+        showSection(loadingSection);
+
+        try {
+            // Upload the image to get a URL
+            const blob = await fetch(previewImage.src).then(r => r.blob());
+            const file = new File([blob], "physics_problem.jpg", { type: "image/jpeg" });
+            const imageUrl = await uploadImage(file);
+
+            // Use AI to solve the physics problem
+            const solution = await solveWithAI(imageUrl);
+
+            if (solution.error) {
+                showError(solution.error);
+                return;
+            }
+
+            // Display the solution
+            renderSolution(solution);
+            showSection(solutionSection);
+
+            // Save to recent problems
+            saveRecentProblem(imageUrl, solution);
+
+            // Update the recent problems list
+            loadRecentProblems();
+
+        } catch (error) {
+            console.error('Error analyzing physics problem:', error);
+            showError('An error occurred while analyzing the physics problem. Please try again.');
+        }
     }
 
-    // Hard bot: tries to win or block player
-    function makeHardBotMove() {
-        // Try to win
-        for (let i = 0; i < gameBoard.length; i++) {
-            if (gameBoard[i] === '') {
-                gameBoard[i] = 'O';
-                if (checkWin()) {
-                    gameBoard[i] = '';
-                    return i;
-                }
-                gameBoard[i] = '';
-            }
+    async function uploadImage(file) {
+        try {
+            // Upload to S3 via the websim API
+            const url = await websim.upload(file);
+            return url;
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            throw error;
         }
-        
-        // Try to block
-        for (let i = 0; i < gameBoard.length; i++) {
-            if (gameBoard[i] === '') {
-                gameBoard[i] = 'X';
-                if (checkWin()) {
-                    gameBoard[i] = '';
-                    return i;
-                }
-                gameBoard[i] = '';
-            }
-        }
-        
-        // Take center if available
-        if (gameBoard[4] === '') {
-            return 4;
-        }
-        
-        // Take a corner if available
-        const corners = [0, 2, 6, 8].filter(index => gameBoard[index] === '');
-        if (corners.length > 0) {
-            return corners[Math.floor(Math.random() * corners.length)];
-        }
-        
-        // Otherwise, make a random move
-        return makeEasyBotMove();
     }
 
-    // Impossible bot: minimax algorithm
-    function makeImpossibleBotMove() {
-        return minimax(gameBoard, 'O').index;
+    async function solveWithAI(imageUrl) {
+        try {
+            // Use the LLM to analyze and solve the physics problem
+            const completion = await websim.chat.completions.create({
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are a physics tutor AI that solves physics problems from images. 
+                        Analyze the physics problem in the image and provide a step-by-step solution.
+                        Identify the type of physics problem (mechanics, thermodynamics, electromagnetism, etc.).
+                        Apply relevant formulas and explain each step clearly.
+                        Include calculations and final answers.
+                        Format your response with step numbers, equations, and explanations.
+                        If you can't clearly see or understand the problem, explain what's unclear.
+                        ${currentLanguage === 'bosnian' ? 'Please provide your response in Bosnian language.' : ''}`
+                    },
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: "Please solve this physics problem. Provide a step-by-step solution.",
+                            },
+                            {
+                                type: "image_url",
+                                image_url: { url: imageUrl },
+                            },
+                        ],
+                    },
+                ],
+            });
+
+            // Process the AI response
+            return {
+                steps: parseSteps(completion.content),
+                fullText: completion.content
+            };
+        } catch (error) {
+            console.error('Error solving with AI:', error);
+            return { error: 'Failed to solve the problem. Please try a clearer image.' };
+        }
     }
 
-    // Minimax algorithm for unbeatable AI
-    function minimax(board, player) {
-        const availableCells = board.map((cell, index) => 
-            cell === '' ? index : null).filter(index => index !== null);
-        
-        // Check terminal states
-        if (checkWinForBoard(board, 'X')) {
-            return { score: -10 };
-        } else if (checkWinForBoard(board, 'O')) {
-            return { score: 10 };
-        } else if (availableCells.length === 0) {
-            return { score: 0 };
+    function parseSteps(solutionText) {
+        // Simple step parser - splits by numbered steps or line breaks
+        // In a real app, this would be more sophisticated
+        const steps = [];
+
+        // Try to identify numbered steps like "1. " or "Step 1: "
+        const stepMatches = solutionText.match(/(?:^|\n)(?:Step\s*)?(\d+)[.:]+(.*?)(?=(?:\n(?:Step\s*)?(?:\d+)[.:]+|\n*$))/gs);
+
+        if (stepMatches && stepMatches.length > 0) {
+            return stepMatches.map(step => {
+                // Clean up the step text
+                return step.trim().replace(/^Step\s*\d+[.:]+/, '');
+            });
         }
-        
-        // Collect scores for each possible move
-        const moves = [];
-        
-        for (let i = 0; i < availableCells.length; i++) {
-            const move = {};
-            move.index = availableCells[i];
-            
-            // Make the move
-            board[availableCells[i]] = player;
-            
-            // Collect score from recursive call
-            if (player === 'O') {
-                const result = minimax(board, 'X');
-                move.score = result.score;
-            } else {
-                const result = minimax(board, 'O');
-                move.score = result.score;
-            }
-            
-            // Undo the move
-            board[availableCells[i]] = '';
-            
-            moves.push(move);
-        }
-        
-        // Find the best move
-        let bestMove;
-        if (player === 'O') {
-            // Maximizing player
-            let bestScore = -Infinity;
-            for (let i = 0; i < moves.length; i++) {
-                if (moves[i].score > bestScore) {
-                    bestScore = moves[i].score;
-                    bestMove = i;
-                }
-            }
+
+        // Fallback: just split by double newlines
+        return solutionText.split(/\n\n+/).filter(s => s.trim().length > 0);
+    }
+
+    function renderSolution(solution) {
+        if (solution.steps && solution.steps.length > 0) {
+            // Render structured steps
+            solutionContainer.innerHTML = solution.steps.map((step, index) => {
+                return `
+                    <div class="step">
+                        <span class="step-number">Step ${index + 1}:</span>
+                        ${formatStep(step)}
+                    </div>
+                `;
+            }).join('');
         } else {
-            // Minimizing player
-            let bestScore = Infinity;
-            for (let i = 0; i < moves.length; i++) {
-                if (moves[i].score < bestScore) {
-                    bestScore = moves[i].score;
-                    bestMove = i;
-                }
-            }
-        }
-        
-        return moves[bestMove];
-    }
-
-    // Check if the game is won
-    function checkWin() {
-        const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-            [0, 4, 8], [2, 4, 6]             // diagonals
-        ];
-        
-        return winPatterns.some(pattern => {
-            return pattern.every(index => {
-                return gameBoard[index] === currentPlayer;
-            });
-        });
-    }
-
-    // Check if a specific player has won on a given board
-    function checkWinForBoard(board, player) {
-        const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-            [0, 4, 8], [2, 4, 6]             // diagonals
-        ];
-        
-        return winPatterns.some(pattern => {
-            return pattern.every(index => {
-                return board[index] === player;
-            });
-        });
-    }
-
-    // Check if the game is a draw
-    function checkDraw() {
-        return gameBoard.every(cell => cell !== '');
-    }
-
-    // Update status display
-    function updateStatus() {
-        statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
-    }
-
-    // Update the game board UI based on gameBoard state
-    function updateGameBoard() {
-        cells.forEach((cell, index) => {
-            cell.textContent = gameBoard[index];
-            cell.className = 'cell';
-            if (gameBoard[index] === 'X') {
-                cell.classList.add('x');
-            } else if (gameBoard[index] === 'O') {
-                cell.classList.add('o');
-            }
-        });
-    }
-
-    // Reset the game
-    function resetGame() {
-        if (gameMode === 'friend') {
-            // Reset shared state for multiplayer
-            room.updateRoomState({
-                gameBoard: ['', '', '', '', '', '', '', '', ''],
-                currentPlayer: 'X',
-                isGameActive: true
-            });
-        } else {
-            // Reset local state for single player
-            gameBoard = ['', '', '', '', '', '', '', '', ''];
-            currentPlayer = 'X';
-            isGameActive = true;
-            isPlayerTurn = true;
-            
-            cells.forEach(cell => {
-                cell.textContent = '';
-                cell.className = 'cell';
-            });
-            
-            updateStatus();
+            // Fallback to raw text with basic formatting
+            solutionContainer.innerHTML = formatText(solution.fullText);
         }
     }
 
-    // Start the app
-    init();
+    function formatStep(stepText) {
+        // Format equations and special physics notations
+        return stepText
+            .replace(/\$([^$]+)\$/g, '<span class="equation">$1</span>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    }
+
+    function formatText(text) {
+        // Basic Markdown-ish formatting
+        return text
+            .replace(/\n\n/g, '<br/><br/>')
+            .replace(/\n/g, '<br/>')
+            .replace(/\$([^$]+)\$/g, '<span class="equation">$1</span>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    }
+
+    async function saveRecentProblem(imageUrl, solution) {
+        try {
+            // Save to persistent storage
+            await room.collection('physics_problems').create({
+                imageUrl,
+                solution: solution.fullText,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Error saving recent problem:', error);
+        }
+    }
+
+    async function loadRecentProblems() {
+        try {
+            // Get problems from persistent storage, most recent first
+            const problems = await room.collection('physics_problems').getList();
+
+            if (problems.length === 0) {
+                problemsList.innerHTML = '<p class="empty-state">Your recent problems will appear here</p>';
+                return;
+            }
+
+            // Display the problems
+            problemsList.innerHTML = problems.slice(0, 6).map(problem => {
+                return `
+                    <div class="problem-item" data-id="${problem.id}">
+                        <img src="${problem.imageUrl}" alt="Physics problem">
+                    </div>
+                `;
+            }).join('');
+
+            // Add click event to view solutions
+            document.querySelectorAll('.problem-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const problemId = item.getAttribute('data-id');
+                    viewProblemSolution(problemId);
+                });
+            });
+
+        } catch (error) {
+            console.error('Error loading recent problems:', error);
+            problemsList.innerHTML = '<p class="empty-state">Error loading recent problems</p>';
+        }
+    }
+
+    async function viewProblemSolution(problemId) {
+        try {
+            // Find the problem in storage
+            const problems = await room.collection('physics_problems').getList();
+            const problem = problems.find(p => p.id === problemId);
+
+            if (!problem) {
+                showError('Problem not found');
+                return;
+            }
+
+            // Display the problem image and solution
+            previewImage.src = problem.imageUrl;
+            renderSolution({ fullText: problem.solution });
+
+            // Show the relevant sections
+            showSection(previewSection);
+            showSection(solutionSection);
+
+        } catch (error) {
+            console.error('Error viewing problem solution:', error);
+            showError('Error loading the selected problem');
+        }
+    }
+
+    function showSection(section) {
+        // Hide all sections
+        previewSection.style.display = 'none';
+        loadingSection.style.display = 'none';
+        solutionSection.style.display = 'none';
+        errorSection.style.display = 'none';
+
+        // Show the requested section
+        section.style.display = 'block';
+
+        // Scroll to the section
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showError(message) {
+        errorMessage.textContent = message;
+        showSection(errorSection);
+    }
+
+    function resetUI() {
+        // Reset inputs
+        imageInput.value = '';
+        uploadInput.value = '';
+
+        // Show the initial upload section only
+        previewSection.style.display = 'none';
+        loadingSection.style.display = 'none';
+        solutionSection.style.display = 'none';
+        errorSection.style.display = 'none';
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function applyLanguage() {
+        const lang = translations[currentLanguage];
+
+        // Update UI elements with translated text
+        document.querySelector('h1').textContent = lang.title;
+        document.querySelector('#cameraButton span').textContent = lang.takePhoto;
+        document.querySelector('.or-divider').textContent = lang.or;
+        document.querySelector('#uploadButton span').textContent = lang.uploadImage;
+        document.querySelector('.preview-section h2').textContent = lang.yourProblem;
+        document.querySelector('#cancelButton').textContent = lang.cancel;
+        document.querySelector('#solveButton').textContent = lang.solveProblem;
+        document.querySelector('.loading-section p').textContent = lang.analyzing;
+        document.querySelector('.solution-section h2').textContent = lang.solution;
+        document.querySelector('#newProblemButton').textContent = lang.solveAnother;
+        document.querySelector('#errorMessage').textContent = lang.errorMessage;
+        document.querySelector('#tryAgainButton').textContent = lang.tryAgain;
+        document.querySelector('.recent-problems h2').textContent = lang.recentProblems;
+        document.querySelector('.empty-state').textContent = lang.emptyState;
+        document.querySelector('#footerText').textContent = lang.footerText;
+    }
 });
